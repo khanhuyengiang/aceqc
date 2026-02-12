@@ -70,7 +70,7 @@ def generate_model_data(csv_file, method, N, **kwargs):
             rho, M, gate = rand_dm(2), ket2dm(rand_ket(2)), rand_unitary(2)
             write_to_csv(csv_file,header,process_model_data(rho, gate, M, model_id))
     elif method == "perturbed":
-        N = round(N**(1/3))
+        N = round(N**1/3)
         perturbed_dm = generate_perturbed_rho(rho_ideal,N)
         perturbed_U = generate_perturbed_unitary(S_gate,N,2)
         perturbed_data = [(dm1, unitary, dm2) for dm1, unitary, dm2 in itertools.product(perturbed_dm, perturbed_U, perturbed_dm)]
@@ -81,7 +81,7 @@ def generate_model_data(csv_file, method, N, **kwargs):
             M = perturbed_data[i][2]
             write_to_csv(csv_file,header,process_model_data(rho, gate, M, model_id))
     elif method == 'uniform':
-        N = round(N**(1/5))
+        N = round(N**1/5)
         uniform_dm = generate_uniform_rho(N, N) 
         uniform_U = generate_random_unitaries(N)
         uniform_data = [(dm1, unitary, dm2) for dm1, unitary, dm2 in itertools.product(uniform_dm, uniform_U, uniform_dm)]
@@ -92,46 +92,32 @@ def generate_model_data(csv_file, method, N, **kwargs):
             M = uniform_data[i][2]
             write_to_csv(csv_file,header,process_model_data(rho, gate, M, model_id))
 
-def load_model_data(csv_file, load_gauge_fidelity=False):
-    import csv
-    from qutip import Qobj
-
+def load_model_data(csv_file):
+    # Initialize empty lists to hold the data for each column
     model_ids = []
-    models = []
+    models = []  # This will now hold Qobj instances
     P_vectors = []
     model_average_fidelities = []
-    model_average_fidelity_gauges = [] if load_gauge_fidelity else None
-
-    with open(csv_file, mode='r', newline='') as file:
+    model_average_fidelity_gauges = []  
+    
+    # Open and read the CSV file
+    with open(csv_file, mode='r') as file:
         reader = csv.DictReader(file)
-
+        
+        # Loop through each row in the CSV
         for row in reader:
-            # If gauge fidelity is required, enforce validity
-            if load_gauge_fidelity:
-                val = row.get('model_average_fidelity_gauge', '').strip()
-                try:
-                    gauge_fidelity = float(val)
-                except (ValueError, TypeError):
-                    continue  # DROP row completely
-
-            # Load the rest only if row is valid
             model_ids.append(row['model_id'])
-            models.append([Qobj(m) for m in eval(row['model'])])
-            P_vectors.append(eval(row['P_vector']))
+            
+            # Convert string representations of the models to Qobj
+            model_data = eval(row['model'])  # The model is stored as a list of lists in string form
+            qobj_model = [Qobj(m) for m in model_data] 
+            
+            models.append(qobj_model)
+            
+            P_vectors.append(eval(row['P_vector']))  # Convert P_vector from string representation to list
             model_average_fidelities.append(float(row['model_average_fidelity']))
-
-            if load_gauge_fidelity:
-                model_average_fidelity_gauges.append(gauge_fidelity)
-
-    result = {
-        "model_id": model_ids,
-        "model": models,
-        "P_vector": P_vectors,
-        "model_average_fidelity": model_average_fidelities,
-    }
-
-    if load_gauge_fidelity:
-        result["model_average_fidelity_gauge"] = model_average_fidelity_gauges
-
-    return result
-
+            
+            # Assuming model_average_fidelity_gauge is in the CSV but not in your function
+            if 'model_average_fidelity_gauge' in row:  # It's optional, might not always be there
+                model_average_fidelity_gauges.append(float(row['model_average_fidelity_gauge']))
+    return()

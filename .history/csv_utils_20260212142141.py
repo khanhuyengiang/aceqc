@@ -96,42 +96,42 @@ def load_model_data(csv_file, load_gauge_fidelity=False):
     import csv
     from qutip import Qobj
 
+    # Initialize lists
     model_ids = []
     models = []
     P_vectors = []
     model_average_fidelities = []
     model_average_fidelity_gauges = [] if load_gauge_fidelity else None
 
-    with open(csv_file, mode='r', newline='') as file:
+    # Open CSV
+    with open(csv_file, mode='r') as file:
         reader = csv.DictReader(file)
 
-        for row in reader:
-            # If gauge fidelity is required, enforce validity
-            if load_gauge_fidelity:
-                val = row.get('model_average_fidelity_gauge', '').strip()
-                try:
-                    gauge_fidelity = float(val)
-                except (ValueError, TypeError):
-                    continue  # DROP row completely
+        if load_gauge_fidelity:
+            # Include gauge fidelities
+            for row in reader:
+                model_ids.append(row['model_id'])
+                models.append([Qobj(m) for m in eval(row['model'])])
+                P_vectors.append(eval(row['P_vector']))
+                model_average_fidelities.append(float(row['model_average_fidelity']))
+                model_average_fidelity_gauges.append(float(row['model_average_fidelity_gauges']))
+        else:
+            # Skip gauge fidelities
+            for row in reader:
+                model_ids.append(row['model_id'])
+                models.append([Qobj(m) for m in eval(row['model'])])
+                P_vectors.append(eval(row['P_vector']))
+                model_average_fidelities.append(float(row['model_average_fidelity']))
 
-            # Load the rest only if row is valid
-            model_ids.append(row['model_id'])
-            models.append([Qobj(m) for m in eval(row['model'])])
-            P_vectors.append(eval(row['P_vector']))
-            model_average_fidelities.append(float(row['model_average_fidelity']))
-
-            if load_gauge_fidelity:
-                model_average_fidelity_gauges.append(gauge_fidelity)
-
+    # Construct result dictionary
     result = {
-        "model_id": model_ids,
-        "model": models,
-        "P_vector": P_vectors,
-        "model_average_fidelity": model_average_fidelities,
+        "model_ids": model_ids,
+        "models": models,
+        "P_vectors": P_vectors,
+        "model_average_fidelities": model_average_fidelities,
     }
 
     if load_gauge_fidelity:
-        result["model_average_fidelity_gauge"] = model_average_fidelity_gauges
+        result["model_average_fidelity_gauges"] = model_average_fidelity_gauges
 
     return result
-
