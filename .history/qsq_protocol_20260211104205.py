@@ -64,13 +64,13 @@ def average_fidelity(rho, gate, M):
     fid_M = fidelity(M, M_ideal)
     
     # Check the validity of each fidelity value
-    if not (0 <= round(fid_rho, 6) <= 1):
+    if not (0 <= fid_rho <= 1):
         raise ValueError(f"Invalid fidelity for rho: {fid_rho}. Fidelity values must be between 0 and 1.")
     
-    if not (0 <= round(fid_gate, 6) <= 1):
+    if not (0 <= fid_gate <= 1):
         raise ValueError(f"Invalid fidelity for gate: {fid_gate}. Fidelity values must be between 0 and 1.")
     
-    if not (0 <= round(fid_M, 6) <= 1):
+    if not (0 <= fid_M <= 1):
         raise ValueError(f"Invalid fidelity for M: {fid_M}. Fidelity values must be between 0 and 1.")
     
     # Calculate the average fidelity

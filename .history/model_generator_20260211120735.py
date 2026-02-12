@@ -3,7 +3,7 @@ import qutip as qt
 from qutip import Qobj, rand_herm, rand_unitary, qeye, sigmax, sigmay, sigmaz
 
 # Function to generate perturbed density matrices
-def generate_perturbed_rho(rho_ideal,N):
+def generate_perturbed_rho(rho_ideal):
     """
     Generates perturbed density matrices by applying random Hermitian perturbations.
     
@@ -15,33 +15,26 @@ def generate_perturbed_rho(rho_ideal,N):
     - List of perturbed density matrices.
     """
     perturbed_rhos = []  # List to store perturbed density matrices
-    for i in range(N):
-        # Step 1: Generate a Hermitian perturbation matrix
-        perturbation = 2*rand_herm(rho_ideal.shape[0])
-        
-        # Step 2: Apply the perturbation to the original density matrix
-        perturbed_rho = rho_ideal + perturbation
-        
-        # Step 3: Ensure Hermiticity (average with its conjugate transpose)
-        perturbed_rho = (perturbed_rho + perturbed_rho.dag()) / 2
-        
-        # Step 4: Ensure the density matrix is positive semi-definite
-        eigenvalues = perturbed_rho.eigenenergies()
-        if any(eigenvalue < 0 for eigenvalue in eigenvalues):
-            # Add a small positive shift if there are negative eigenvalues
-            perturbed_rho = perturbed_rho + abs(min(eigenvalues)) * qeye(rho_ideal.shape[0])
-        
-        # Step 5: Normalize to trace 1
-        perturbed_rho = perturbed_rho / perturbed_rho.tr()
+    # Step 1: Generate a Hermitian perturbation matrix
+    perturbation = rand_herm(rho_ideal.shape[0])
+    perturbed_rho = rho_ideal + perturbation
+    
+    # Step 2: Ensure Hermiticity (average with its conjugate transpose)
+    perturbed_rho = (perturbed_rho + perturbed_rho.dag()) / 2
+    
+    # Step 3: Ensure the density matrix is positive semi-definite
+    eigenvalues = perturbed_rho.eigenenergies()
+    if any(eigenvalue < 0 for eigenvalue in eigenvalues):
+        # Add a small positive shift if there are negative eigenvalues
+        perturbed_rho = perturbed_rho + abs(min(eigenvalues)) * qeye(rho_ideal.shape[0])
 
-        # Step 6: Append the perturbed density matrix to the list
-        perturbed_rhos.append(perturbed_rho)
+    perturbed_rhos.append(perturbed_rho/ perturbed_rho.tr())
     
     return perturbed_rhos
 
 
 # Function to generate perturbed unitary operators
-def generate_perturbed_unitary(U_ideal, num_samples, noise_range=1):
+def generate_perturbed_unitary(U_ideal, num_samples, noise_range=0.1):
     """
     Generates perturbed unitary operators by adding random noise.
     
@@ -90,7 +83,7 @@ def bloch_vector_to_density_matrix(r):
 
 
 # Function to generate density matrices for a grid of points on the Bloch sphere
-def generate_uniform_rho(theta_steps, phi_steps):
+def generate_density_matrices(theta_steps, phi_steps):
     """
     Generate density matrices corresponding to a grid of points on the Bloch sphere.
     

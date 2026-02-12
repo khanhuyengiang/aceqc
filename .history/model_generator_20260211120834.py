@@ -17,7 +17,7 @@ def generate_perturbed_rho(rho_ideal,N):
     perturbed_rhos = []  # List to store perturbed density matrices
     for i in range(N):
         # Step 1: Generate a Hermitian perturbation matrix
-        perturbation = 2*rand_herm(rho_ideal.shape[0])
+        perturbation = rand_herm(rho_ideal.shape[0])
         
         # Step 2: Apply the perturbation to the original density matrix
         perturbed_rho = rho_ideal + perturbation
@@ -41,7 +41,7 @@ def generate_perturbed_rho(rho_ideal,N):
 
 
 # Function to generate perturbed unitary operators
-def generate_perturbed_unitary(U_ideal, num_samples, noise_range=1):
+def generate_perturbed_unitary(U_ideal, num_samples, noise_range=0.1):
     """
     Generates perturbed unitary operators by adding random noise.
     
@@ -90,7 +90,7 @@ def bloch_vector_to_density_matrix(r):
 
 
 # Function to generate density matrices for a grid of points on the Bloch sphere
-def generate_uniform_rho(theta_steps, phi_steps):
+def generate_density_matrices(theta_steps, phi_steps):
     """
     Generate density matrices corresponding to a grid of points on the Bloch sphere.
     

@@ -57,20 +57,20 @@ def experiment_prob_failing(rho, gate, M):
     return prob_failing
 
 # Function to compute the average fidelity of the system and operations
-def average_fidelity(rho, gate, M):
+def average_fidelity(rho, gate, M, rho_ideal, M_ideal, S_gate):
     # Compute the fidelities
     fid_rho = fidelity(rho, rho_ideal)
     fid_gate = average_gate_fidelity(gate, S_gate)
     fid_M = fidelity(M, M_ideal)
     
     # Check the validity of each fidelity value
-    if not (0 <= round(fid_rho, 6) <= 1):
+    if not (0 <= fid_rho <= 1):
         raise ValueError(f"Invalid fidelity for rho: {fid_rho}. Fidelity values must be between 0 and 1.")
     
-    if not (0 <= round(fid_gate, 6) <= 1):
+    if not (0 <= fid_gate <= 1):
         raise ValueError(f"Invalid fidelity for gate: {fid_gate}. Fidelity values must be between 0 and 1.")
     
-    if not (0 <= round(fid_M, 6) <= 1):
+    if not (0 <= fid_M <= 1):
         raise ValueError(f"Invalid fidelity for M: {fid_M}. Fidelity values must be between 0 and 1.")
     
     # Calculate the average fidelity

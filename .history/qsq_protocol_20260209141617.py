@@ -58,30 +58,10 @@ def experiment_prob_failing(rho, gate, M):
 
 # Function to compute the average fidelity of the system and operations
 def average_fidelity(rho, gate, M):
-    # Compute the fidelities
-    fid_rho = fidelity(rho, rho_ideal)
-    fid_gate = average_gate_fidelity(gate, S_gate)
-    fid_M = fidelity(M, M_ideal)
-    
-    # Check the validity of each fidelity value
-    if not (0 <= round(fid_rho, 6) <= 1):
-        raise ValueError(f"Invalid fidelity for rho: {fid_rho}. Fidelity values must be between 0 and 1.")
-    
-    if not (0 <= round(fid_gate, 6) <= 1):
-        raise ValueError(f"Invalid fidelity for gate: {fid_gate}. Fidelity values must be between 0 and 1.")
-    
-    if not (0 <= round(fid_M, 6) <= 1):
-        raise ValueError(f"Invalid fidelity for M: {fid_M}. Fidelity values must be between 0 and 1.")
-    
-    # Calculate the average fidelity
-    avg_fid = (fid_rho + fid_gate + fid_M) / 3
-    avg_fid = round(avg_fid, 6)  # Average fidelity rounded to 6 decimal places
-    
-    if not (0 <= avg_fid <= 1):
-        raise ValueError(f"Invalid average fidelity: {avg_fid}. Average fidelity must be between 0 and 1.")
-    
-    return avg_fid
-
+    avg_fid = (fidelity(rho, rho_ideal) + average_gate_fidelity(gate, S_gate) + fidelity(M, M_ideal)) / 3
+    if avg_fid < 0 or avg_fid > 1:
+        raise ValueError(f"Invalid average fidelity: {avg_fid}. Fidelity values must be between 0 and 1. ")
+    return round(avg_fid, 6)  # Average fidelity rounded to 6 decimal places
 
 from scipy.optimize import differential_evolution
 from scipy.optimize import minimize
@@ -111,37 +91,15 @@ def average_fidelity_gauge(rho,gate,M):
     )
 
     initial_fid = average_fidelity(rho,gate,M)
-    max_fid = max(1-result.fun,initial_fid)
-    
-    # max_fid = 1-result.fun
-    # if max_fid < 1.05*initial_fid:
-    #     result_global = differential_evolution(
-    #         objective_function, 
-    #         bounds=[(0, 2*np.pi), (0, np.pi/2), (0, 2*np.pi)],  # adjust bounds based on the physical parameters
-    #         args=(rho, gate, M),
-    #         strategy='best1bin',  # You can tweak the strategy
-    #         maxiter=500,
-    #         popsize=20  # Try different population sizes if needed
-    #     )
-    #     max_fid = max(1-result.fun, 1-result_global.fun,average_fidelity(rho,gate,M))
+    max_fid = 1-result.fun
+    if max_fid < 1.1*initial_fid:
+        result_global = differential_evolution(
+            objective_function, 
+            bounds=[(0, 2*np.pi), (0, 0.5*np.pi/2), (0, 2*np.pi)],  # adjust bounds based on the physical parameters
+            args=(rho, gate, M),
+            strategy='best1bin',  # You can tweak the strategy
+            maxiter=1000,
+            popsize=20  # Try different population sizes if needed
+        )
+        max_fid = max(1-result.fun, 1-result_global.fun,average_fidelity(rho,gate,M))
     return max_fid
-
-def compute_U(theta1, theta2, theta3):
-    # Constructing the unitary matrix U(θ1, θ2, θ3)
-    U = np.array([
-        [np.exp(1j * theta1) * np.cos(theta2), np.exp(1j * theta3) * np.sin(theta2)],
-        [np.exp(-1j * theta3) * np.sin(theta2), np.exp(-1j * theta1) * np.cos(theta2)]
-    ])
-    return Qobj(U).unit()
-
-# Function 2: Given a matrix U, compute theta1, theta2, theta3
-def decompose_U(U):
-    # Extracting theta2 from the sine elements (sin(θ2) term)
-    theta2 = np.arcsin(np.abs(U[1, 0]))  # Using the off-diagonal elements
-    
-    # Using the real part of U[0, 0] and U[1, 1] to extract theta1 and theta3
-    cos_theta2 = np.cos(theta2)
-    theta1 = np.angle(U[0, 0])  # The phase angle of U[0, 0] gives θ1
-    theta3 = np.angle(U[0, 1])  # The phase angle of U[0, 1] gives θ3
-    
-    return theta1, theta2, theta3
