@@ -57,9 +57,8 @@ def experiment_prob_failing(rho, gate, M):
     return prob_failing
 
 def operator_norm(A,B):
-    C = (A - B).full()
-    eigvals = np.linalg.eigvals(C.conj().T @ C)
-    return (np.sqrt(np.max(eigvals))).real
+    eigvals = np.linalg.eigvals(A.conj().T @ A)
+    return (np.sqrt(np.max(eigvals)))
   
 # Function to compute the average fidelity of the system and operations
 def average_fidelity(rho, gate, M):
@@ -67,16 +66,16 @@ def average_fidelity(rho, gate, M):
     fid_rho = fidelity(rho, rho_ideal)
     fid_gate = average_gate_fidelity(gate, S_gate)
     fid_M = operator_norm(M,M_ideal)
-
+    
     # Check the validity of each fidelity value
     if not (0 <= round(fid_rho, 6) <= 1):
         raise ValueError(f"Invalid fidelity for rho: {fid_rho}. Fidelity values must be between 0 and 1.")
     
     if not (0 <= round(fid_gate, 6) <= 1):
-        raise ValueError(f"Invalid fidelity for gate: {fid_gate}. Average gate fidelity values must be between 0 and 1.")
+        raise ValueError(f"Invalid fidelity for gate: {fid_gate}. Fidelity values must be between 0 and 1.")
     
     if not (0 <= round(fid_M, 6) <= 1):
-        raise ValueError(f"Invalid operator distance for M: {fid_M}. Operator distance values must be between 0 and 1.")
+        raise ValueError(f"Invalid fidelity for M: {fid_M}. Fidelity values must be between 0 and 1.")
     
     # Calculate the average fidelity
     avg_fid = (fid_rho + fid_gate + fid_M) / 3
