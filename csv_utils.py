@@ -71,8 +71,8 @@ def generate_model_data(csv_file, method, N, **kwargs):
             write_to_csv(csv_file,header,process_model_data(rho, gate, M, model_id))
     elif method == "perturbed":
         N = round(N**(1/3))
-        perturbed_dm = generate_perturbed_rho(rho_ideal,N)
-        perturbed_U = generate_perturbed_unitary(S_gate,N,2)
+        perturbed_dm = generate_perturbed_rho(rho_ideal,N,0.5)
+        perturbed_U = generate_perturbed_unitary(S_gate,N,0.5)
         perturbed_data = [(dm1, unitary, dm2) for dm1, unitary, dm2 in itertools.product(perturbed_dm, perturbed_U, perturbed_dm)]
         for i in range(len(perturbed_data)):
             model_id = timestamp + '_' + method + '_' + str(i)

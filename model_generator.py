@@ -3,7 +3,7 @@ import qutip as qt
 from qutip import Qobj, rand_herm, rand_unitary, qeye, sigmax, sigmay, sigmaz
 
 # Function to generate perturbed density matrices
-def generate_perturbed_rho(rho_ideal,N):
+def generate_perturbed_rho(rho_ideal,N, noise_range=1):
     """
     Generates perturbed density matrices by applying random Hermitian perturbations.
     
@@ -17,7 +17,7 @@ def generate_perturbed_rho(rho_ideal,N):
     perturbed_rhos = []  # List to store perturbed density matrices
     for i in range(N):
         # Step 1: Generate a Hermitian perturbation matrix
-        perturbation = 2*rand_herm(rho_ideal.shape[0])
+        perturbation = noise_range*2*rand_herm(rho_ideal.shape[0])
         
         # Step 2: Apply the perturbation to the original density matrix
         perturbed_rho = rho_ideal + perturbation
