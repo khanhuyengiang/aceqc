@@ -9,7 +9,7 @@ def plot_predictions(y_true, y_pred, title="Comparing Input and ML Predicted Ave
     """
     # Scatter plot
     plt.figure(figsize=(8,6))
-    plt.scatter(y_true, y_pred, alpha=0.6, label='Predictions')
+    plt.scatter(y_true, y_pred, alpha=0.3, label='Predictions')
 
     # Ideal 1:1 line
     xmin, xmax = min(y_true), max(y_true)
