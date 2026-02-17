@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.optimize import minimize, basinhopping, differential_evolution
 from qutip import Qobj
-from qsq_protocol import average_fidelity
+from qsq_protocol import average_fidelity, plus_state, minus_state
 
 def compute_U(theta1, theta2, theta3):
     # Build a single-qubit unitary from three angles
@@ -76,4 +76,21 @@ def optimize_method(
     else:
         raise ValueError("Unknown optimization method.")
 
+    return result
+
+def average_fidelity_gauge(rho, gate, M, avg_fidelity=None):
+    """
+    Compute the gauge-corrected average fidelity.
+    """
+    if avg_fidelity is None:
+        avg_fidelity = average_fidelity(rho,gate,M)
+    
+    eigenvalues, eigenstates = M.eigenstates()
+    U_guess = eigenstates[0] @ plus_state.dag() - 1j * eigenstates[1] @ minus_state.dag()
+    initial_guess = decompose_U(U_guess)
+    bounds = [(-np.pi, np.pi), (0, np.pi/2), (-np.pi, np.pi)]
+    result_C = optimize_method('basinhopping', objective_function, initial_guess, rho, gate, M, bounds)
+    result_D = optimize_method('differential_evolution', objective_function, initial_guess, rho, gate, M, bounds)
+    result = max(1-result_C.fun, 1-result_D.fun, avg_fidelity)
+    
     return result

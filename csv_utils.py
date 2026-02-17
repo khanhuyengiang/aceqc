@@ -2,7 +2,9 @@ import csv
 import os
 import datetime
 import itertools
+import time
 from qsq_protocol import experiment_prob_failing,average_fidelity, rho_ideal,S_gate
+from optimizer_utils import average_fidelity_gauge
 from model_generator import generate_random_unitaries, generate_perturbed_rho, generate_perturbed_unitary, generate_uniform_rho
 from qutip import Qobj, rand_dm, rand_ket, rand_unitary, ket2dm
 def write_to_csv(csv_file, header, row):
@@ -71,8 +73,9 @@ def generate_model_data(csv_file, method, N, **kwargs):
             write_to_csv(csv_file,header,process_model_data(rho, gate, M, model_id))
     elif method == "perturbed":
         N = round(N**(1/3))
-        perturbed_dm = generate_perturbed_rho(rho_ideal,N,0.5)
-        perturbed_U = generate_perturbed_unitary(S_gate,N,0.5)
+        perturbation = kwargs.get("perturbation", 0.1)
+        perturbed_dm = generate_perturbed_rho(rho_ideal,N,perturbation)
+        perturbed_U = generate_perturbed_unitary(S_gate,N,perturbation)
         perturbed_data = [(dm1, unitary, dm2) for dm1, unitary, dm2 in itertools.product(perturbed_dm, perturbed_U, perturbed_dm)]
         for i in range(len(perturbed_data)):
             model_id = timestamp + '_' + method + '_' + str(i)
@@ -135,3 +138,54 @@ def load_model_data(csv_file, load_gauge_fidelity=False):
 
     return result
 
+def _rewrite_csv(csv_file, fieldnames, rows, retries=5, delay=0.2):
+    tmp_file = csv_file + ".tmp"
+
+    with open(tmp_file, mode='w', newline='') as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+    for attempt in range(retries):
+        try:
+            os.replace(tmp_file, csv_file)
+            return
+        except PermissionError:
+            if attempt == retries - 1:
+                raise
+            time.sleep(delay)
+
+
+
+def fill_model_gauge_fidelity(csv_file, flush_every=10,simple=False):
+    # Step 1: read everything
+    with open(csv_file, mode='r', newline='') as file:
+        reader = csv.DictReader(file)
+        fieldnames = reader.fieldnames
+        rows = list(reader)
+
+    print(f"{len(rows)} rows to be processed")
+    if simple:
+        for i, row in enumerate(rows, start=1):
+            if not row.get('model_average_fidelity_gauge'):
+                row['model_average_fidelity_gauge'] = float(row['model_average_fidelity'])
+    else:
+        # Step 2: process rows in place
+        for i, row in enumerate(rows, start=1):
+            if not row.get('model_average_fidelity_gauge'):
+                model_data = eval(row['model'])
+                rho, gate, M = [Qobj(m) for m in model_data]
+                avg_fidelity = float(row['model_average_fidelity'])
+
+                row['model_average_fidelity_gauge'] = average_fidelity_gauge(
+                    rho, gate, M, avg_fidelity
+                )
+
+            # Flush FULL dataset
+            if i % flush_every == 0:
+                print(f"[{i}/{len(rows)}] flushed ({100*i/len(rows):.1f}%)")
+                _rewrite_csv(csv_file, fieldnames, rows)
+    
+
+    # Final flush
+    _rewrite_csv(csv_file, fieldnames, rows)
